@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Text, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Text, ScrollView, Animated } from 'react-native';
 import { Button, Card } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect,useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 interface Task {
   id: string;
@@ -14,11 +14,12 @@ interface Task {
 const Home = () => {
   const navigation = useNavigation<any>();
 
-
   const [tasks, setTasks] = useState<Task[]>([]);
   const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
   const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const bounceAnim = useRef(new Animated.Value(1)).current;
   useFocusEffect(
     React.useCallback(() => {
       const loadTasks = async () => {
@@ -36,40 +37,77 @@ const Home = () => {
       };
 
       loadTasks();
-    }, [])
+
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }).start();
+
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: 1.2,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, [fadeAnim, bounceAnim])
   );
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Welcome to the Home</Text>
 
-      <Button
-        mode="contained"
-        onPress={() => navigation.navigate('AddTask')}
-        style={styles.addButton}
-        labelStyle={styles.addButtonText}
-      >
-        Add Task
-      </Button>
+      <Animated.View style={{ transform: [{ scale: bounceAnim }] }}>
+        <Button
+          mode="contained"
+          onPress={() => navigation.navigate('AddTask')}
+          style={styles.addButton}
+          labelStyle={styles.addButtonText}
+        >
+          Add Task
+        </Button>
+      </Animated.View>
 
       <Text style={styles.sectionTitle}>Pending Tasks</Text>
-      {pendingTasks.map((task) => (
-        <Card key={task.id} style={styles.card}>
-          <Card.Title title={task.title} />
-          <Card.Content>
-            <Text>{task.description}</Text>
-          </Card.Content>
-        </Card>
+      {pendingTasks.map((task, index) => (
+        <Animated.View
+          key={task.id}
+          style={[
+            styles.card,
+            { opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] },
+          ]}
+        >
+          <Card>
+            <Card.Title title={task.title} />
+            <Card.Content>
+              <Text>{task.description}</Text>
+            </Card.Content>
+          </Card>
+        </Animated.View>
       ))}
 
       <Text style={styles.sectionTitle}>Completed Tasks</Text>
-      {completedTasks.map((task) => (
-        <Card key={task.id} style={styles.card}>
-          <Card.Title title={task.title} />
-          <Card.Content>
-            <Text>{task.description}</Text>
-          </Card.Content>
-        </Card>
+      {completedTasks.map((task, index) => (
+        <Animated.View
+          key={task.id}
+          style={[
+            styles.card,
+            { opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] },
+          ]}
+        >
+          <Card>
+            <Card.Title title={task.title} />
+            <Card.Content>
+              <Text>{task.description}</Text>
+            </Card.Content>
+          </Card>
+        </Animated.View>
       ))}
     </ScrollView>
   );
