@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, ScrollView, Text, Alert } from 'react-native';
 import { Button, Card, Checkbox } from 'react-native-paper';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import useTaskStore from '../useTaskStore';
 
 interface Task {
   title: string;
@@ -10,92 +10,38 @@ interface Task {
 }
 
 const AddTask = () => {
+  const { tasks, addTask, deleteTask, updateTaskStatus } = useTaskStore();
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [tasks, setTasks] = useState<Task[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
 
-  useEffect(() => {
-    const loadTasks = async () => {
-      try {
-        const storedTasks = await AsyncStorage.getItem('tasks');
-        if (storedTasks) {
-          console.log('Loaded tasks:', storedTasks);
-          setTasks(JSON.parse(storedTasks));
-        }
-      } catch (error) {
-        console.error('Error loading tasks:', error);
-      }
-    };
-
-    loadTasks();
-  }, []);
-
-  const handleSaveTask = async () => {
+  const handleSaveTask = () => {
     if (!title.trim() || !description.trim()) {
       Alert.alert('Error', 'Please enter both a title and description');
       return;
     }
 
     if (isEditing && editIndex !== null) {
-      const updatedTasks = [...tasks];
-      updatedTasks[editIndex] = { ...updatedTasks[editIndex], title, description };
-
-      try {
-        await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
-        setTasks(updatedTasks);
-        setIsEditing(false);
-        setEditIndex(null);
-      } catch (error) {
-        console.error('Error updating task:', error);
-      }
+      updateTaskStatus(editIndex, { title, description, completed: false });
+      setIsEditing(false);
+      setEditIndex(null);
     } else {
-      const newTask: Task = {
-        title,
-        description,
-        completed: false,
-      };
-
-      try {
-        const storedTasks = await AsyncStorage.getItem('tasks');
-        let updatedTasks: Task[] = storedTasks ? JSON.parse(storedTasks) : [];
-        updatedTasks.push(newTask);
-
-        console.log('Saving tasks:', updatedTasks);
-
-        await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
-        setTasks(updatedTasks);
-      } catch (error) {
-        console.error('Error saving task:', error);
-      }
+      addTask({ title, description, completed: false });
     }
 
     setTitle('');
     setDescription('');
   };
 
-  const handleToggleTask = async (index: number) => {
-    const updatedTasks = [...tasks];
-    updatedTasks[index].completed = !updatedTasks[index].completed;
-
-    try {
-      await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
-      setTasks(updatedTasks);
-    } catch (error) {
-      console.error('Error updating task status:', error);
-    }
+  const handleToggleTask = (index: number) => {
+    const updatedTask = { ...tasks[index], completed: !tasks[index].completed };
+    updateTaskStatus(index, updatedTask); // Toggle task completion via Zustand
   };
 
-  const handleDeleteTask = async (index: number) => {
-    const updatedTasks = tasks.filter((_, i) => i !== index);
-
-    try {
-      await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
-      setTasks(updatedTasks);
-    } catch (error) {
-      console.error('Error deleting task:', error);
-    }
+  const handleDeleteTask = (index: number) => {
+    deleteTask(index); // Delete task via Zustand
   };
 
   const handleEditTask = (index: number) => {
