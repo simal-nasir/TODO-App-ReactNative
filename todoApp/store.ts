@@ -1,20 +1,21 @@
 import {create} from 'zustand';
 
 interface Task {
-    id: string;
+    id: any;
     title: string;
     description: string;
     status: 'Pending' | 'Completed' | 'Archived';
+    completed?:boolean
 }
 
 interface TaskStore {
     tasks: Task[];
     addTask: (task: Task) => void;
-    deleteTask: (id: string) => void;
-    updateTaskStatus: (id: string, status: 'Pending' | 'Completed' | 'Archived') => void;
+    deleteTask: (id: any) => void;
+    updateTaskStatus: (id: any, status: 'Pending' | 'Completed' | 'Archived') => void;
 }
 
-const useTaskStore = create<TaskStore>((set) => ({
+export const useTaskStore = create<TaskStore>((set) => ({
     tasks: [],
     addTask: (task) =>
         set((state) => ({ tasks: [...state.tasks, task] })),
@@ -29,5 +30,3 @@ const useTaskStore = create<TaskStore>((set) => ({
             ),
         })),
 }));
-
-export default useTaskStore;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, ScrollView, Text, Alert } from 'react-native';
 import { Button, Card, Checkbox } from 'react-native-paper';
-import useTaskStore from '../useTaskStore';
+import {useTaskStore} from '../store';
 
 interface Task {
   title: string;
@@ -80,7 +80,7 @@ const AddTask = () => {
       </Button>
 
       <Text style={styles.subTitle}>Saved Tasks</Text>
-      {tasks.map((task, index) => (
+      {tasks.map((task, index:number) => (
         <Card key={`${task.title}-${index}`} style={styles.card}>
           <Card.Title title={task.title} />
           <Card.Content>
